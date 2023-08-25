@@ -1,4 +1,5 @@
-const BACK_END_URL = "";
+const BACK_END_URL =
+  "https://port-0-cloudtype-test-nx562olfgskv6d.sel3.cloudtype.app";
 
 document.addEventListener("DOMContentLoaded", async () => {
   // 테이블에 들어갈 데이터를 불러온다.
