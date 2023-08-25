@@ -1,49 +1,30 @@
-name: Deploy to cloudtype
+name: my-front
 on:
   push:
     branches:
       - main
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: "ap-northeast-2"
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Connect deploy key
-        uses: cloudtype-github-actions/connect@v1
-        with:
-          token: ${{ secrets.CLOUDTYPE_TOKEN }}
-          ghtoken: ${{ secrets.GHP_TOKEN }}
-      - name: Deploy
-        uses: cloudtype-github-actions/deploy@v1
-        with:
-          token: ${{ secrets.CLOUDTYPE_TOKEN }}
-          project: 91song4/cloudtype-test
-          stage: main
-          yaml: >
-            name: cloudtype-test
+      - name: Checkout source code.
+        uses: actions/checkout@master
 
-            app: node@18
+      - name: Upload binary to S3 bucket
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --acl public-read --exclude '*' --include 'index.html' --include 'main.js'
+        env:
+          AWS_S3_BUCKET: ${{ secrets.BUCKET_NAME }}
 
-            options:
-              env:
-                - name: NODE_ENV
-                  value: ${{secrets.NODE_ENV}}
-                - name: DATABASE_HOST
-                  value: ${{secrets.DATABASE_HOST}}
-                - name: DATABASE_PORT
-                  value: ${{secrets.DATABASE_PORT}}
-                - name: DATABASE_USERNAME
-                  value: ${{secrets.DATABASE_USERNAME}}
-                - name: DATABASE_PASSWORD
-                  value: ${{secrets.DATABASE_PASSWORD}}
-                - name: DATABASE_NAME
-                  value: ${{secrets.DATABASE_NAME}}
-              ports: 3000
-              build: npm run build
-              start: npm run start:prod
-              install: npm ci
-            context:
-              git:
-                url: git@github.com:${{ github.repository }}.git
-                ref: ${{ github.ref }}
+      - name: Invalidate cache CloudFront
+        uses: chetan/invalidate-cloudfront-action@master
+        env:
+          DISTRIBUTION: ${{ secrets.DISTRIBUTION_ID }}
+          PATHS: "/index.html"
+        continue-on-error: true
