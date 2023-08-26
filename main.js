@@ -86,13 +86,14 @@ function editCust() {
       // 데이터 수정 API 호출
       axios
         .put(`${BACK_END_URL}/cust/${this.id}`, body)
-        .then(() => {
-          // 페이지 새로고침
-          window.location.reload();
-        })
+        .then()
         .catch((e) => {
           console.error(e);
           alert("데이터 형식에 맞게 수정해주세요.");
+        })
+        .finally(() => {
+          // 페이지 새로고침
+          window.location.reload();
         });
     });
   } catch (err) {
